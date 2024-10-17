@@ -243,10 +243,6 @@ async def on_court_case_selected(client, callback_query):
     # Ищем соответствующий прецедент по id
     court_case = next((case for case in court_cases_global if case['id'] == court_case_id), None)
 
-    # Удаляем предыдущее сообщение, если оно не "Выберите номер дела:"
-    if callback_query.message.text != "Выберите номер дела:":
-        await callback_query.message.delete()
-
     if court_case:
         logger.info(f"Найденный court_case: {court_case}")
         precedent = court_case['precedent']
