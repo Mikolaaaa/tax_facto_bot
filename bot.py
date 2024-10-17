@@ -15,9 +15,7 @@ app = Client("my_bot", api_id=20038786, api_hash="8f9173e9b27beadd3dc35475ef1de1
 global_data = {}
 court_cases_global = []
 filter_values_global = []
-filter_values_global2 = []
 user_filters = {}
-user_filters2 = {}
 
 # Словарь для перевода фильтров
 filter_translation = {
@@ -28,13 +26,7 @@ filter_translation = {
     "article_nk_rf_forfeit": "ШТРАФ (СТАТЬЯ)",
     "article_nk_rf_episode": "ЭПИЗОД (СТАТЬЯ)",
     "article_nk_rf_base": "СУДЕБНЫЙ АКТ (ОСНОВНАЯ СТАТЬЯ)",
-    "theme_precedent": "ТЕМА ПРЕЦЕДЕНТА",
-    "evidence":"ДОКАЗАТЕЛЬСТВА",
-    "article": "НОРМА НК РФ",
-    "table_violation": "ОПИСАНИЕ НАРУШЕНИЯ",
-    "table_assessment_of_the_court": "ОЦЕНКА СУДА",
-    "table_precendent": "ПРЕЦЕДЕНТ",
-    "tax": "ПОШЛИНЫ"
+    "theme_precedent": "ТЕМА ПРЕЦЕДЕНТА"
 }
 
 # Максимальное количество кнопок на одной странице
@@ -387,6 +379,5 @@ async def on_value_selected(client, callback_query):
         except Exception as e:
             logger.exception("Ошибка при выполнении запроса к API")
             await callback_query.message.reply("Произошла ошибка при обращении к сервер.")
-
 
 app.run()
