@@ -3,6 +3,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import aiohttp
 import logging
 import math
+import os
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -67,7 +68,7 @@ async def handle_message(client, message):
                         print(f"filters: {filters_data}")
                         # Создаем кнопки для фильтров с пагинацией
                         filter_buttons = create_filter_buttons2(filters_data, user_id)
-                        await message.reply("Выберите фильтр2:", reply_markup=filter_buttons)
+                        await message.reply("Выберите фильтр:", reply_markup=filter_buttons)
                     else:
                         await message.reply("Нет доступных фильтров.")
                         logger.warning("Нет доступных фильтров.")
@@ -141,6 +142,11 @@ async def on_filter_selected(client, callback_query):
 
                 # Формируем сообщение с полным названием
                 full_filter_name = filter_translation.get(filter_key, filter_key)
+
+                # Удаляем предыдущее сообщение, если оно не "Выберите номер дела:"
+                if callback_query.message.text != "Выберите номер дела:":
+                    await callback_query.message.delete()
+
                 # Создаем кнопки для значений фильтра
                 value_buttons = await create_value_buttons2(filter_values, filter_key)
                 await callback_query.message.reply_text(f"Выберите значение для {full_filter_name}:", reply_markup=value_buttons)
@@ -250,10 +256,6 @@ async def on_value_selected(client, callback_query):
     value_id = data_parts[-1]
     user_id = callback_query.from_user.id  # Получаем ID пользователя
 
-    # Удаляем предыдущее сообщение, если оно не "Выберите номер дела:"
-    if callback_query.message.text != "Выберите номер дела:":
-        await callback_query.message.delete()
-
     # Добавляем выбранное значение в словарь с фильтрами пользователя
     if user_id not in user_filters2:
         user_filters2[user_id] = {}
@@ -292,8 +294,6 @@ async def on_value_selected(client, callback_query):
                     print(f"table_assessment_of_the_court: {table_assessment_of_the_court}")
                     print(f"table_precendent: {table_precendent}")
 
-                    all_table = [table_violation, table_assessment_of_the_court, table_precendent]
-
                     # Создаем кнопки
                     keyboard = InlineKeyboardMarkup([
                         [InlineKeyboardButton("Описание нарушения", callback_data="show_violation")],
@@ -301,7 +301,40 @@ async def on_value_selected(client, callback_query):
                         [InlineKeyboardButton("Прецедент", callback_data="show_precendent")],
                     ])
 
-                    await callback_query.message.reply("Выберите информацию для отображения:", reply_markup=keyboard)
+                    # Удаляем предыдущее сообщение, если оно не "Выберите номер дела:"
+                    if callback_query.message.text != "Выберите номер дела:":
+                        await callback_query.message.delete()
+
+                    #print(f"user_filters2: {user_filters2}")
+
+                    filters_data_local = data.get('filters', {})
+
+                    value_translation = {}
+
+                    for filter_key, values in filters_data_local.items():
+                        #print(f"filter_key: {filter_key}")
+                        #print(f"values: {values}")
+                        for value in values:
+                            # print(f"value: {value}")
+                            value_id = value[f'{filter_key}__id']
+                            value_name = value[
+                                f'{filter_key}__name']  # или другой ключ, в зависимости от вашей структуры
+                            value_translation[value_id] = value_name
+
+                    # Формируем строку с выбранными фильтрами
+                    selected_filters_message = "Фильтры:\n"
+                    for k, v in user_filters2[user_id].items():
+                        filter_name = filter_translation.get(k, k)  # Получаем название фильтра по ключу
+                        selected_values = [f"**{value_translation.get(int(value_id), value_id)}**" for value_id in v]
+                        selected_filters_message += f"{filter_name}: {', '.join(selected_values)}\n"
+
+                    await callback_query.message.reply(f"{selected_filters_message}Выберите информацию для отображения:", reply_markup=keyboard)
+
+                    filters_data = data.get('filters', {})
+
+                    filter_buttons = create_filter_buttons2(filters_data, user_id)
+                    #print(filter_buttons)
+                    await callback_query.message.reply(f"Если нужно, выберите еще фильтр:", reply_markup=filter_buttons)
                 else:
                     await callback_query.message.reply("Ошибка при запросе к API.")
         except Exception as e:
@@ -309,21 +342,40 @@ async def on_value_selected(client, callback_query):
             await callback_query.message.reply("Произошла ошибка при обращении к сервер.")
 
 
-# Обработчики нажатий на кнопки
+
+
+
+async def send_large_text(file_name, text, callback_query):
+    # Если текст - это список, объединим его в строку
+    if isinstance(text, list):
+        text = "\n".join(text)  # Объединяем список в строку с разделителем \n
+
+    with open(file_name, 'w', encoding='utf-8') as f:
+        f.write(text)
+
+    await callback_query.message.reply_document(document=file_name)
+    os.remove(file_name)  # Удаляем файл после отправки
+
+
 @app.on_callback_query(filters.regex(r"show_violation"))
 async def show_violation(client, callback_query):
     await callback_query.answer()  # Убираем "обработчик загрузки"
-    await callback_query.message.reply(f"Нарушение:\n{global_data2.get('table_violation', 'Нет данных')}")
+    violation_text = global_data2.get('table_violation', 'Нет данных')
+    await send_large_text('violation.txt', violation_text, callback_query)
+
 
 @app.on_callback_query(filters.regex(r"show_assessment"))
 async def show_assessment(client, callback_query):
     await callback_query.answer()  # Убираем "обработчик загрузки"
-    await callback_query.message.reply(f"Оценка суда:\n{global_data2.get('table_assessment_of_the_court', 'Нет данных')}")
+    assessment_text = global_data2.get('table_assessment_of_the_court', 'Нет данных')
+    await send_large_text('assessment.txt', assessment_text, callback_query)
+
 
 @app.on_callback_query(filters.regex(r"show_precendent"))
 async def show_precendent(client, callback_query):
     await callback_query.answer()  # Убираем "обработчик загрузки"
-    await callback_query.message.reply(f"Прецедент:\n{global_data2.get('table_precendent', 'Нет данных')}")
+    precedent_text = global_data2.get('table_precendent', 'Нет данных')
+    await send_large_text('precedent.txt', precedent_text, callback_query)
 
 
 app.run()

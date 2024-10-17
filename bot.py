@@ -33,11 +33,6 @@ filter_translation = {
 BUTTONS_PER_PAGE = 10
 
 
-# Функция для сокращения текста кнопок
-def shorten_text(text, max_length=30):
-    return text if len(text) <= max_length else text[:max_length - 3] + '...'
-
-
 # Функция для создания кнопок фильтров с пагинацией
 def create_filter_buttons(filters_data, user_id, page=1):
     buttons = []
