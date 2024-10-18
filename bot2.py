@@ -96,7 +96,7 @@ def create_filter_buttons2(filters_data, user_id, page=1):
             pass
         else:
             translated_filter = filter_translation.get(filter_key, filter_key)
-            buttons.append([InlineKeyboardButton(translated_filter + '2', callback_data=f"filter2_{filter_key}")])
+            buttons.append([InlineKeyboardButton(translated_filter, callback_data=f"filter2_{filter_key}")])
 
     # Добавляем кнопки пагинации
     total_pages = math.ceil(len(filters_data) / BUTTONS_PER_PAGE)
@@ -129,7 +129,7 @@ async def on_filter_selected(client, callback_query):
 
     # Подготовка данных для POST-запроса
     filters_data = {
-        "filters": user_filters[user_id]  # Используем все выбранные фильтры пользователя
+        "filters": user_filters2[user_id]  # Используем все выбранные фильтры пользователя
     }
     print(f"filters_data {filters_data}")
 
