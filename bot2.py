@@ -124,9 +124,18 @@ async def on_filter_selected(client, callback_query):
 
     logger.info(f"Фильтр выбран: {filter_key}")
 
+    user_id = callback_query.from_user.id
+    print(f"user_id {user_id}")
+
+    # Подготовка данных для POST-запроса
+    filters_data = {
+        "filters": user_filters[user_id]  # Используем все выбранные фильтры пользователя
+    }
+    print(f"filters_data {filters_data}")
+
     # Отправляем POST-запрос снова для получения данных фильтра
     async with aiohttp.ClientSession() as session:
-        async with session.post("http://195.19.40.209:8001/api/precedent-2/") as response:
+        async with session.post("http://195.19.40.209:8001/api/precedent-2/", json=filters_data) as response:
             if response.status == 200:
                 data = await response.json()
                 # Удаляем предыдущее сообщение, если оно не "Выберите номер дела:"

@@ -178,9 +178,18 @@ async def on_filter_selected(client, callback_query):
 
     logger.info(f"Фильтр выбран: {filter_key}")
 
+    user_id = callback_query.from_user.id
+    print(f"user_id {user_id}")
+
+    # Подготовка данных для POST-запроса
+    filters_data = {
+        "filters": user_filters[user_id]  # Используем все выбранные фильтры пользователя
+    }
+    print(f"filters_data {filters_data}")
+
     # Отправляем POST-запрос снова для получения данных фильтра
     async with aiohttp.ClientSession() as session:
-        async with session.post("http://195.19.40.209:8001/api/precedent/") as response:
+        async with session.post("http://195.19.40.209:8001/api/precedent/", json=filters_data) as response:
             if response.status == 200:
                 data = await response.json()
                 # Удаляем предыдущее сообщение, если оно не "Выберите номер дела:"
@@ -331,6 +340,8 @@ async def on_value_selected(client, callback_query):
 
                         filters_data_local = data.get('filters', {})
 
+                        print(f"user_filters[user_id]: {user_filters[user_id]}")
+
                         for filter_key, values in filters_data_local.items():
                             #print(f"filter_key: {filter_key}")
                             #print(f"values: {values}")
@@ -341,6 +352,7 @@ async def on_value_selected(client, callback_query):
                                 else:
                                     value_id = value[f'{filter_key}_id']
                                 value_name = value[f'{filter_key}__name']  # или другой ключ, в зависимости от вашей структуры
+                                print(f"value_name: {value_name}")
                                 value_translation[value_id] = value_name
 
                         # Формируем строку с выбранными фильтрами
