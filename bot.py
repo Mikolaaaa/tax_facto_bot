@@ -195,13 +195,13 @@ async def on_filter_selected(client, callback_query):
     logger.info(f"Фильтр выбран: {filter_key}")
 
     user_id = callback_query.from_user.id
-    print(f"user_id {user_id}")
+    #print(f"user_id {user_id}")
 
     # Подготовка данных для POST-запроса
     filters_data = {
         "filters": user_filters[user_id]  # Используем все выбранные фильтры пользователя
     }
-    print(f"filters_data {filters_data}")
+    #print(f"filters_data {filters_data}")
 
     # Отправляем POST-запрос снова для получения данных фильтра
     async with aiohttp.ClientSession() as session:
@@ -356,7 +356,7 @@ async def on_value_selected(client, callback_query):
 
                         filters_data_local = data.get('filters', {})
 
-                        print(f"user_filters[user_id]: {user_filters[user_id]}")
+                        #print(f"user_filters[user_id]: {user_filters[user_id]}")
 
                         for filter_key, values in filters_data_local.items():
                             #print(f"filter_key: {filter_key}")
@@ -368,7 +368,7 @@ async def on_value_selected(client, callback_query):
                                 else:
                                     value_id = value[f'{filter_key}_id']
                                 value_name = value[f'{filter_key}__name']  # или другой ключ, в зависимости от вашей структуры
-                                print(f"value_name: {value_name}")
+                                #print(f"value_name: {value_name}")
                                 value_translation[value_id] = value_name
 
                         # Формируем строку с выбранными фильтрами
@@ -413,7 +413,7 @@ async def handle_message(client, message):
     # Создаем новый пустой набор фильтров для пользователя
     user_filters2[user_id] = {}
 
-    print(f"user_filters2 {user_filters2[user_id]}")
+    #print(f"user_filters2 {user_filters2[user_id]}")
     async with aiohttp.ClientSession() as session:
         try:
             # Отправляем POST-запрос для получения фильтров
@@ -429,7 +429,7 @@ async def handle_message(client, message):
                     if filters_data:
                         #print(f"filters: {filters_data}")
                         # Создаем кнопки для фильтров с пагинацией
-                        print(f"user_filters2: {user_filters2}")
+                        #print(f"user_filters2: {user_filters2}")
                         filter_buttons = create_filter_buttons2(filters_data, user_id)
                         await message.reply("Выберите фильтр:", reply_markup=filter_buttons)
                     else:
@@ -495,7 +495,7 @@ async def on_filter_selected(client, callback_query):
     logger.info(f"Фильтр выбран: {filter_key}")
 
     user_id = callback_query.from_user.id
-    print(f"user_id {user_id}")
+    #print(f"user_id {user_id}")
 
     # Подготовка данных для POST-запроса
     filters_data = {
@@ -528,7 +528,7 @@ async def on_filter_selected(client, callback_query):
 
                 #print(f"filter_values: {filter_values}")
                 if filter_values == []:
-                    print('hihihhi')
+                    #print('hihihhi')
 
                     await callback_query.message.reply_text(f"Значений для {full_filter_name} нет")
 
@@ -604,7 +604,7 @@ async def create_value_buttons2(filter_values, filter_key, page=1):
         pagination_buttons.append(InlineKeyboardButton("⬅️ Назад", callback_data=f"value2_page2_{filter_key}_{page - 1}"))
 
     if page < total_pages:
-        print(222222222222222222222222222222222222222222222)
+        #print(222222222222222222222222222222222222222222222)
         pagination_buttons.append(
             InlineKeyboardButton("Вперед ➡️", callback_data=f"value2_page2_{filter_key}_{page + 1}"))
 
@@ -660,7 +660,7 @@ async def on_value_selected(client, callback_query):
     filter_key = "_".join(data_parts[1:-1]) if len(data_parts) > 2 else data_parts[1]
     value_id = data_parts[-1]
     user_id = callback_query.from_user.id  # Получаем ID пользователя
-    print(44444444444444444444444444444444444444444)
+    #print(44444444444444444444444444444444444444444)
 
     # Добавляем выбранное значение в словарь с фильтрами пользователя
     if user_id not in user_filters2:
@@ -700,9 +700,9 @@ async def on_value_selected(client, callback_query):
                     table_assessment_of_the_court = data.get('table_assessment_of_the_court', [])
                     table_precendent = data.get('table_precendent', [])
 
-                    print(f"table_violation: {table_violation}")
-                    print(f"table_assessment_of_the_court: {table_assessment_of_the_court}")
-                    print(f"table_precendent: {table_precendent}")
+                    #print(f"table_violation: {table_violation}")
+                    #print(f"table_assessment_of_the_court: {table_assessment_of_the_court}")
+                    #print(f"table_precendent: {table_precendent}")
 
                     # Создаем кнопки
                     keyboard = InlineKeyboardMarkup([
