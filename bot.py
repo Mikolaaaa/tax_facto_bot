@@ -754,37 +754,43 @@ async def on_value_selected(client, callback_query):
             await callback_query.message.reply("Произошла ошибка при обращении к сервер.")
 
 
-async def send_large_text(file_name, text, callback_query):
+async def send_large_text(file_name, text, callback_query, no_data_message):
     # Если текст - это список, объединим его в строку
     if isinstance(text, list):
         text = "\n".join(text)  # Объединяем список в строку с разделителем \n
 
-    with open(file_name, 'w', encoding='utf-8') as f:
-        f.write(text)
+    # Если текст пустой или равен "Нет данных", отправляем сообщение об отсутствии данных
+    if not text or text == "Нет данных":
+        await callback_query.message.reply(no_data_message)
+    else:
+        # Если данные есть, сохраняем их в файл и отправляем
+        with open(file_name, 'w', encoding='utf-8') as f:
+            f.write(text)
 
-    await callback_query.message.reply_document(document=file_name)
-    os.remove(file_name)  # Удаляем файл после отправки
+        await callback_query.message.reply_document(document=file_name)
+        os.remove(file_name)  # Удаляем файл после отправки
 
 
 @app.on_callback_query(filters.regex(r"show_violation"))
 async def show_violation(client, callback_query):
     await callback_query.answer()  # Убираем "обработчик загрузки"
     violation_text = global_data2.get('table_violation', 'Нет данных')
-    await send_large_text('violation.txt', violation_text, callback_query)
+    await send_large_text('violation.txt', violation_text, callback_query, "Нет данных по описанию правонарушения.")
 
 
 @app.on_callback_query(filters.regex(r"show_assessment"))
 async def show_assessment(client, callback_query):
     await callback_query.answer()  # Убираем "обработчик загрузки"
     assessment_text = global_data2.get('table_assessment_of_the_court', 'Нет данных')
-    await send_large_text('assessment.txt', assessment_text, callback_query)
+    await send_large_text('assessment.txt', assessment_text, callback_query, "Нет данных по оценке суда.")
 
 
 @app.on_callback_query(filters.regex(r"show_precendent"))
 async def show_precendent(client, callback_query):
     await callback_query.answer()  # Убираем "обработчик загрузки"
     precedent_text = global_data2.get('table_precendent', 'Нет данных')
-    await send_large_text('precedent.txt', precedent_text, callback_query)
+    await send_large_text('precedent.txt', precedent_text, callback_query, "Нет данных по прецеденту.")
+
 
 
 app.run()
