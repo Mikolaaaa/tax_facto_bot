@@ -13,13 +13,9 @@ logger = logging.getLogger(__name__)
 app = Client("my_bot", api_id=20038786, api_hash="8f9173e9b27beadd3dc35475ef1de1c2",
              bot_token="7840094271:AAEYvU6hieJoJOcPs3vUVmdaBMZGghGhnlI")
 
-global_data = {}
 global_data2 = {}
-court_cases_global = []
 court_cases_global2 = []
-filter_values_global = []
 filter_values_global2 = []
-user_filters = {}
 user_filters2 = {}
 
 # Словарь для перевода фильтров
@@ -49,9 +45,15 @@ async def handle_message(client, message):
     user_id = message.from_user.id  # Получаем user_id
     logger.info(f"Получено сообщение от пользователя {message.from_user.id}: {message.text}")
 
-    if user_id not in user_filters2:
-        user_filters2[user_id] = {}
+    # Обнуляем фильтры для пользователя при каждом новом вызове команды
+    if user_id in user_filters2:
+        del user_filters2[user_id]
+        logger.info(f"Фильтры для пользователя {user_id} обнулены.")
 
+    # Создаем новый пустой набор фильтров для пользователя
+    user_filters2[user_id] = {}
+
+    print(f"user_filters2 {user_filters2[user_id]}")
     async with aiohttp.ClientSession() as session:
         try:
             # Отправляем POST-запрос для получения фильтров
@@ -65,8 +67,9 @@ async def handle_message(client, message):
                     # Обрабатываем фильтры
                     filters_data = data.get('filters', {})
                     if filters_data:
-                        print(f"filters: {filters_data}")
+                        #print(f"filters: {filters_data}")
                         # Создаем кнопки для фильтров с пагинацией
+                        print(f"user_filters2: {user_filters2}")
                         filter_buttons = create_filter_buttons2(filters_data, user_id)
                         await message.reply("Выберите фильтр:", reply_markup=filter_buttons)
                     else:
@@ -82,17 +85,24 @@ async def handle_message(client, message):
 
 
 def create_filter_buttons2(filters_data, user_id, page=1):
+
+    if filters_data == []:
+        return 'Нет значений'
     buttons = []
     start_index = (page - 1) * BUTTONS_PER_PAGE
     end_index = start_index + BUTTONS_PER_PAGE
     filter_items = list(filters_data.items())[start_index:end_index]
     #print(f"filter_items {filter_items}")
     #print(f"filters_data {filters_data}")
-    #print(f"user_filters {user_filters}")
+    #print(f"user_filters2 {user_filters2}")
+
 
     for filter_key, filter_values in filter_items:
         #print(f"filter_key: {filter_key}")
+        #print(f"filter_values: {filter_values}")
         if filter_key in user_filters2[user_id]:
+            pass
+        elif filter_values == []:
             pass
         else:
             translated_filter = filter_translation.get(filter_key, filter_key)
@@ -131,7 +141,7 @@ async def on_filter_selected(client, callback_query):
     filters_data = {
         "filters": user_filters2[user_id]  # Используем все выбранные фильтры пользователя
     }
-    print(f"filters_data {filters_data}")
+    #print(f"filters_data {filters_data}")
 
     # Отправляем POST-запрос снова для получения данных фильтра
     async with aiohttp.ClientSession() as session:
@@ -145,7 +155,7 @@ async def on_filter_selected(client, callback_query):
                 #print(filter_key)
                 filter_values = filters_data.get(filter_key, [])
                 filter_values_global2 = filter_values
-                print(f"filter_values: {filter_values}")
+                #(f"filter_values: {filter_values}")
                 #print(f"filter_values {filter_values}")
                 #print(f"filters_data {filters_data}")
 
@@ -156,9 +166,34 @@ async def on_filter_selected(client, callback_query):
                 if callback_query.message.text != "Выберите номер дела:":
                     await callback_query.message.delete()
 
-                # Создаем кнопки для значений фильтра
-                value_buttons = await create_value_buttons2(filter_values, filter_key)
-                await callback_query.message.reply_text(f"Выберите значение для {full_filter_name}:", reply_markup=value_buttons)
+                #print(f"filter_values: {filter_values}")
+                if filter_values == []:
+                    print('hihihhi')
+
+                    await callback_query.message.reply_text(f"Значений для {full_filter_name} нет")
+
+                    # Удаляем предыдущее сообщение, если оно не "Выберите номер дела:"
+                    if callback_query.message.text != "Выберите номер дела:":
+                        await callback_query.message.delete()
+
+                    filters_data = data.get('filters', {})
+
+                    filter_buttons = create_filter_buttons2(filters_data, user_id)
+                    if filter_buttons == 'Нет значений':
+                        print('hihihhi')
+                    # print(filter_buttons)
+                    await callback_query.message.reply(f"Если нужно, выберите еще фильтр или сбросьте их", reply_markup=filter_buttons)
+
+                    # Удаляем предыдущее сообщение, если оно не "Выберите номер дела:"
+                    if callback_query.message.text != "Выберите номер дела:":
+                        await callback_query.message.delete()
+
+                else:
+                    # Создаем кнопки для значений фильтра
+                    value_buttons = await create_value_buttons2(filter_values, filter_key)
+
+                    #print(f"value_buttons: {value_buttons}")
+                    await callback_query.message.reply_text(f"Выберите значение для {full_filter_name}:", reply_markup=value_buttons)
 
 
 
@@ -191,6 +226,7 @@ async def handle_pagination(client, callback_query):
 
 # Функция для создания кнопок значений фильтра с пагинацией
 async def create_value_buttons2(filter_values, filter_key, page=1):
+
     buttons = []
     start_index = (page - 1) * BUTTONS_PER_PAGE
     end_index = start_index + BUTTONS_PER_PAGE
@@ -221,7 +257,7 @@ async def create_value_buttons2(filter_values, filter_key, page=1):
 # Обработчик для сброса фильтров
 @app.on_callback_query(filters.regex(r"reset2_filters2"))
 async def reset_filters(client, callback_query):
-    global user_filters
+    global user_filters2
     user_id = callback_query.from_user.id  # Получаем ID пользователя
 
     # Очищаем фильтры для текущего пользователя
@@ -264,6 +300,7 @@ async def on_value_selected(client, callback_query):
     filter_key = "_".join(data_parts[1:-1]) if len(data_parts) > 2 else data_parts[1]
     value_id = data_parts[-1]
     user_id = callback_query.from_user.id  # Получаем ID пользователя
+    print(44444444444444444444444444444444444444444)
 
     # Добавляем выбранное значение в словарь с фильтрами пользователя
     if user_id not in user_filters2:
@@ -279,6 +316,10 @@ async def on_value_selected(client, callback_query):
     filters_data = {
         "filters": user_filters2[user_id]  # Используем все выбранные фильтры пользователя
     }
+
+    # Удаляем предыдущее сообщение, если оно не "Выберите номер дела:"
+    if callback_query.message.text != "Выберите номер дела:":
+        await callback_query.message.delete()
 
     #print(f"filters_data: {filters_data}")
 
@@ -342,8 +383,10 @@ async def on_value_selected(client, callback_query):
                     filters_data = data.get('filters', {})
 
                     filter_buttons = create_filter_buttons2(filters_data, user_id)
+                    if filter_buttons == 'Нет значений':
+                        print('hihihhi')
                     #print(filter_buttons)
-                    await callback_query.message.reply(f"Если нужно, выберите еще фильтр:", reply_markup=filter_buttons)
+                    await callback_query.message.reply(f"Если нужно, выберите еще фильтр или сбросьте их", reply_markup=filter_buttons)
                 else:
                     await callback_query.message.reply("Ошибка при запросе к API.")
         except Exception as e:

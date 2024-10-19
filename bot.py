@@ -373,7 +373,7 @@ async def on_value_selected(client, callback_query):
                         filters_data = data.get('filters', {})
                         if filters_data:
                             filter_buttons = create_filter_buttons(filters_data, user_id)
-                            await callback_query.message.reply(f"Если нужно, выберите еще фильтр:", reply_markup=filter_buttons)
+                            await callback_query.message.reply(f"Если нужно, выберите еще фильтр или сбросьте их", reply_markup=filter_buttons)
                     else:
                         await callback_query.message.reply("Дел нет, сбросте фильтры",
                                                            reply_markup=create_court_case_buttons(court_cases_global))
